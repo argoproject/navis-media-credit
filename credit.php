@@ -9,7 +9,6 @@
  * License: GPLv2
  * */
 ?>
-
 <?php
 /*
  * CREDIT FIELD
