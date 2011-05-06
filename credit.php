@@ -12,11 +12,15 @@
 <?php
 define( 'MEDIA_CREDIT_POSTMETA_KEY', '_media_credit' );
 
-function navis_get_media_credit( $text = '', $id ) {
-    $post = get_post( $id );
-    return $text . get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
+function navis_get_media_credit_for_attachment( $text = '', $id ) {
+    return $text . navis_get_media_credit( $id );
 }
-add_filter( 'navis_media_credit_for_attachment', 'navis_get_media_credit', 10, 2 );
+add_filter( 'navis_media_credit_for_attachment', 'navis_get_media_credit_for_attachment', 10, 2 );
+
+function navis_get_media_credit( $id ) {
+    $post = get_post( $id );
+    return get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
+}
 
 function navis_add_media_credit( $fields, $post ) {
     $credit = navis_get_media_credit( $post );
@@ -86,38 +90,32 @@ add_filter( 'image_send_to_editor', 'navis_add_caption_shortcode', 19, 8 );
  * navis_image_shortcode(): renders caption shortcodes with our layout
  * and credit field.
  */
-define( 'DEFAULT_ALIGNMENT', 'right' );
-function navis_image_shortcode( $atts, $content, $code ) {
-    extract( shortcode_atts( array(
-        'align' => DEFAULT_ALIGNMENT,
-        'width' => 620,
+function navis_image_shortcode( $text, $atts, $content ) {
+    $atts = shortcode_atts( array(
+        'id' => '',
+        'align' => 'alignnone',
+        'width' => '',
         'credit' => '',
         'caption' => '',
-    ), $atts ) );
+    ), $atts );
+    $atts = apply_filters( 'navis_image_layout_defaults', $atts );
+    extract( $atts );
 
-    if ( $width >= 400 ) {
-        $align = 'centered';
-    }
-    else {
-        if ( $align == 'alignnone' ) {
-            $align = DEFAULT_ALIGNMENT;
-        } elseif ( $align == 'center' ) {
-            $align = 'centered';
-        }
-    }
-    $out = sprintf( '<div class="module image %s" style="width: %spx;">%s',
-        $align, $width, $content );
+    if ( $id ) $id = 'id="' . esc_attr($id) . '" ';
+
+    // XXX: maybe remove module and image classes at some point
+    $out = sprintf( '<div %s class="wp-caption module image %s" style="width: %spx;">%s', $id, $align, $width, do_shortcode( $content ) );
     if ( $credit ) {
-        $out .= sprintf( '<p class="credit">%s</p>', $credit );
+        $out .= sprintf( '<p class="wp-media-credit">%s</p>', $credit );
     }
     if ( $caption ) {
-        $out .= sprintf( '<p class="caption">%s</p>', $caption );
+        $out .= sprintf( '<p class="wp-caption-text">%s</p>', $caption );
     }
     $out .= "</div>";
- 
+
     return $out;
 }
-add_shortcode( 'caption', 'navis_image_shortcode' );
+add_filter( 'img_caption_shortcode', 'navis_image_shortcode', 10, 3 );
 
 /*
  * functions to override default wpeditimage TinyMCE plugin.
