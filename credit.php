@@ -14,7 +14,7 @@ define( 'MEDIA_CREDIT_POSTMETA_KEY', '_media_credit' );
 
 function navis_get_media_credit( $text = '', $id ) {
     $post = get_post( $id );
-    return $text . get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true ) . ' AND IT\'S AWESOME';
+    return $text . get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
 }
 add_filter( 'navis_media_credit_for_attachment', 'navis_get_media_credit', 10, 2 );
 
