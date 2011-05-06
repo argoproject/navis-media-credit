@@ -10,18 +10,16 @@
  * */
 ?>
 <?php
-/*
- * CREDIT FIELD
- */
 define( 'MEDIA_CREDIT_POSTMETA_KEY', '_media_credit' );
 
-function argo_get_media_credit( $obj=null ) {
-    $post = get_post( $obj );
-    return get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
+function navis_get_media_credit( $text = '', $id ) {
+    $post = get_post( $id );
+    return $text . get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true ) . ' AND IT\'S AWESOME';
 }
+add_filter( 'navis_media_credit_for_attachment', 'navis_get_media_credit', 10, 2 );
 
-function argo_add_media_credit( $fields, $post ) {
-    $credit = argo_get_media_credit( $post );
+function navis_add_media_credit( $fields, $post ) {
+    $credit = navis_get_media_credit( $post );
     $html = "<input id='attachments[$post->ID][media_credit]' class='text media_credit' value='$credit' name='attachments[$post->ID][media_credit]' />";
     $fields[ 'media_credit' ] = array(
         'label' => 'Credit',
@@ -30,9 +28,9 @@ function argo_add_media_credit( $fields, $post ) {
     );
     return $fields;
 }
-add_filter( 'attachment_fields_to_edit', 'argo_add_media_credit', 10, 2 );
+add_filter( 'attachment_fields_to_edit', 'navis_add_media_credit', 10, 2 );
 
-function argo_save_media_credit( $post, $attachment ) {
+function navis_save_media_credit( $post, $attachment ) {
     if ( $_POST['attachments'] ) {
         $input = $_POST['attachments'][$post['ID']]['media_credit'];
     } 
@@ -48,15 +46,15 @@ function argo_save_media_credit( $post, $attachment ) {
     }
     return $post;
 }
-add_filter( 'attachment_fields_to_save', 'argo_save_media_credit', 10, 2 );
+add_filter( 'attachment_fields_to_save', 'navis_save_media_credit', 10, 2 );
 
 
 /**
- * argo_add_caption_shortcode(): replaces the built-in caption shortcode
+ * navis_add_caption_shortcode(): replaces the built-in caption shortcode
  * with one that supports a credit field.
  */
-function argo_add_caption_shortcode( $html, $id, $caption, $title, $align, $url, $size, $alt = '' ) {
-    $credit = argo_get_media_credit( $id );
+function navis_add_caption_shortcode( $html, $id, $caption, $title, $align, $url, $size, $alt = '' ) {
+    $credit = navis_get_media_credit( $id );
 
     if ( empty( $caption ) && empty( $credit ) )
         return $html;
@@ -77,19 +75,19 @@ function argo_add_caption_shortcode( $html, $id, $caption, $title, $align, $url,
         '" credit="' . addslashes( $credit ) . '"]' .  $html . '[/caption]';
     return $shcode;
 }
-function argo_remove_caption_handler() {
+function navis_remove_caption_handler() {
     remove_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 );
 }
-add_action( 'admin_init', 'argo_remove_caption_handler', 10 );
-add_filter( 'image_send_to_editor', 'argo_add_caption_shortcode', 19, 8 );
+add_action( 'admin_init', 'navis_remove_caption_handler', 10 );
+add_filter( 'image_send_to_editor', 'navis_add_caption_shortcode', 19, 8 );
 
 
 /**
- * argo_image_shortcode(): renders caption shortcodes with our layout
+ * navis_image_shortcode(): renders caption shortcodes with our layout
  * and credit field.
  */
 define( 'DEFAULT_ALIGNMENT', 'right' );
-function argo_image_shortcode( $atts, $content, $code ) {
+function navis_image_shortcode( $atts, $content, $code ) {
     extract( shortcode_atts( array(
         'align' => DEFAULT_ALIGNMENT,
         'width' => 620,
@@ -119,17 +117,15 @@ function argo_image_shortcode( $atts, $content, $code ) {
  
     return $out;
 }
-add_shortcode( 'caption', 'argo_image_shortcode' );
+add_shortcode( 'caption', 'navis_image_shortcode' );
 
 /*
  * functions to override default wpeditimage TinyMCE plugin.
  */
-function argo_monkeypatch_wpeditimage() {
+function navis_monkeypatch_wpeditimage() {
     echo '<script type="text/javascript" src="' . plugins_url() . 
         '/navis-media-credit/js/media_credit_editor_plugin.js' .
         '"></script>';
 }
-add_action( 'admin_print_footer_scripts', 'argo_monkeypatch_wpeditimage', 1000 );
-
-
+add_action( 'admin_print_footer_scripts', 'navis_monkeypatch_wpeditimage', 1000 );
 ?>
