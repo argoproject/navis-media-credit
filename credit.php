@@ -24,11 +24,11 @@ function navis_get_media_credit( $id ) {
 
 function navis_add_media_credit( $fields, $post ) {
     $credit = navis_get_media_credit( $post );
-    $html = "<input id='attachments[$post->ID][media_credit]' class='text media_credit' value='$credit' name='attachments[$post->ID][media_credit]' />";
+    //$html = "<input id='attachments[$post->ID][media_credit]' class='text media_credit' value='$credit' name='attachments[$post->ID][media_credit]' />";
     $fields[ 'media_credit' ] = array(
         'label' => 'Credit',
-        'input' => 'html',
-        'html'  => $html
+        'input' => 'text',
+        'value' => $credit,
     );
     return $fields;
 }
@@ -45,6 +45,7 @@ function navis_save_media_credit( $post, $attachment ) {
             $input = $_POST[ "attachments[" . $post['ID'] . "][media_credit]" ];
         }
     }
+    // XXX: bug with empty strings
     if ( $input ) {
         update_post_meta( $post[ 'ID' ], MEDIA_CREDIT_POSTMETA_KEY, $input );
     }
