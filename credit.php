@@ -12,6 +12,23 @@
 <?php
 define( 'MEDIA_CREDIT_POSTMETA_KEY', '_media_credit' );
 
+class Navis_Media_Credit {
+    function __construct( $post_id ) {
+        $this->post_id = $post_id;
+        $this->credit = get_post_meta( $post_id, MEDIA_CREDIT_POSTMETA_KEY, true );
+        $this->org = get_post_meta( $post_id, '_navis_media_credit_org', true );
+        $this->can_distribute = get_post_meta( $post_id, '_navis_media_credit_distribute', true );
+    }
+    
+    function toString() {
+        if ( $this->credit && $this->org ) {
+            return sprintf("%s / %s", esc_attr($this->credit), esc_attr($this->org));
+        } else {
+            return esc_attr($this->credit) || esc_attr($this->org);
+        }
+    }
+}
+
 function navis_get_media_credit_for_attachment( $text = '', $id ) {
     return $text . navis_get_media_credit( $id );
 }
@@ -19,16 +36,33 @@ add_filter( 'navis_media_credit_for_attachment', 'navis_get_media_credit_for_att
 
 function navis_get_media_credit( $id ) {
     $post = get_post( $id );
-    return get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
+    // return get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
+    $creditor = new Navis_Media_Credit( $post->ID );
+    return $creditor;
 }
 
 function navis_add_media_credit( $fields, $post ) {
-    $credit = navis_get_media_credit( $post );
+    $creditor = navis_get_media_credit( $post );
     //$html = "<input id='attachments[$post->ID][media_credit]' class='text media_credit' value='$credit' name='attachments[$post->ID][media_credit]' />";
     $fields[ 'media_credit' ] = array(
         'label' => 'Credit',
         'input' => 'text',
-        'value' => $credit,
+        'value' => $creditor->credit,
+    );
+    
+    $org = "NPR";
+    $fields[ 'navis_media_credit_org' ] = array(
+        'label' => 'Organization',
+        'input' => 'text',
+        'value' => $creditor->org
+    );
+    
+    $can_distribute = $creditor->can_distribute;
+    $checked = $can_distribute ? "checked" : "";
+    $fields[ 'navis_media_can_distribute' ] = array(
+        'label' => 'Can distribute?',
+        'input' => 'html',
+        'html' => '<input type="checkbox" value="show" checked="$checked" />'
     );
     return $fields;
 }
@@ -59,10 +93,12 @@ add_filter( 'attachment_fields_to_save', 'navis_save_media_credit', 10, 2 );
  * with one that supports a credit field.
  */
 function navis_add_caption_shortcode( $html, $id, $caption, $title, $align, $url, $size, $alt = '' ) {
-    $credit = navis_get_media_credit( $id );
+    $creditor = navis_get_media_credit( $id );
 
-    if ( empty( $caption ) && empty( $credit ) )
+    //if ( empty( $caption ) && empty( $creditor->toString() ) )
+    if ( empty( $caption ) && !$creditor->toString()) {
         return $html;
+    };
 
     $id = ( 0 < (int) $id ) ? 'attachment_' . $id : '';
     if ( ! preg_match( '/width="([0-9]+)/', $html, $matches ) )
@@ -77,7 +113,7 @@ function navis_add_caption_shortcode( $html, $id, $caption, $title, $align, $url
 
     $shcode = '[caption id="' . $id . '" align="align' . $align . 
         '" width="' . $width . '" caption="' . addslashes( $caption ) .
-        '" credit="' . addslashes( $credit ) . '"]' .  $html . '[/caption]';
+        '" credit="' . addslashes( $creditor->toString() ) . '"]' .  $html . '[/caption]';
     return $shcode;
 }
 function navis_remove_caption_handler() {
