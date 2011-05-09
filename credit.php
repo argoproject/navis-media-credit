@@ -17,24 +17,30 @@ class Navis_Media_Credit {
         $this->post_id = $post_id;
         $this->credit = get_post_meta( $post_id, MEDIA_CREDIT_POSTMETA_KEY, true );
         $this->org = get_post_meta( $post_id, '_navis_media_credit_org', true );
-        $this->can_distribute = get_post_meta( $post_id, '_navis_media_credit_distribute', true );
+        $this->can_distribute = get_post_meta( $post_id, '_navis_media_can_distribute', true );
     }
-    
-    function toString() {
+
+    function to_string() {
         if ( $this->credit && $this->org ) {
             return sprintf("%s / %s", esc_attr($this->credit), esc_attr($this->org));
         } else {
             return esc_attr($this->credit) || esc_attr($this->org);
         }
     }
+
+    function update( $field, $value ) {
+        return update_post_meta( $this->post_id, '_' . $field, $value );
+    }
 }
 
 function navis_get_media_credit_for_attachment( $text = '', $id ) {
-    return $text . navis_get_media_credit( $id );
+    $creditor = navis_get_media_credit( $id );
+    return $text . $creditor->to_string();
 }
 add_filter( 'navis_media_credit_for_attachment', 'navis_get_media_credit_for_attachment', 10, 2 );
 
 function navis_get_media_credit( $id ) {
+    // XXX: do we need to get the post->ID or can we just use this ID??
     $post = get_post( $id );
     // return get_post_meta( $post->ID, MEDIA_CREDIT_POSTMETA_KEY, true );
     $creditor = new Navis_Media_Credit( $post->ID );
@@ -50,7 +56,6 @@ function navis_add_media_credit( $fields, $post ) {
         'value' => $creditor->credit,
     );
     
-    $org = "NPR";
     $fields[ 'navis_media_credit_org' ] = array(
         'label' => 'Organization',
         'input' => 'text',
@@ -58,30 +63,36 @@ function navis_add_media_credit( $fields, $post ) {
     );
     
     $can_distribute = $creditor->can_distribute;
-    $checked = $can_distribute ? "checked" : "";
+    $checked = $can_distribute ? 'checked="checked"' : "";
+    $dist_id = 'attachments[' . $post->ID . '][navis_media_can_distribute]';
     $fields[ 'navis_media_can_distribute' ] = array(
         'label' => 'Can distribute?',
         'input' => 'html',
-        'html' => '<input type="checkbox" value="show" checked="$checked" />'
+        'html' => '<input ' . $dist_id . 'type="checkbox" value="1" ' . $checked . ' />'
     );
     return $fields;
 }
 add_filter( 'attachment_fields_to_edit', 'navis_add_media_credit', 10, 2 );
 
+
 function navis_save_media_credit( $post, $attachment ) {
-    if ( $_POST['attachments'] ) {
-        $input = $_POST['attachments'][$post['ID']]['media_credit'];
-    } 
-    else {
-        // XXX: not sure if this branch is ever followed
-        $input = $_POST[ 'media_credit' ];
-        if ( ! $input ) {
-            $input = $_POST[ "attachments[" . $post['ID'] . "][media_credit]" ];
+    $creditor = new Navis_Media_Credit( $post['ID'] );
+    $fields = array( 'media_credit', 'navis_media_credit_org', 'navis_media_can_distribute' );
+    foreach ( $fields as $field ) {
+        if ( $post['ID'] == 6989 && $field == 'navis_media_can_distribute' ) {
+            error_log( print_r( $_POST['attachments'][$post['ID']], true ) );
         }
-    }
-    // XXX: bug with empty strings
-    if ( $input ) {
-        update_post_meta( $post[ 'ID' ], MEDIA_CREDIT_POSTMETA_KEY, $input );
+        if ( $_POST['attachments'] ) {
+            $input = $_POST['attachments'][$post['ID']][$field];
+        } 
+        else {
+            // XXX: not sure if this branch is ever followed
+            $input = $_POST[ $field ];
+            if ( ! $input ) {
+                $input = $_POST[ "attachments[" . $post['ID'] . "][" . $field . "]" ];
+            }
+        }
+        $creditor->update( $field, $input );
     }
     return $post;
 }
@@ -95,8 +106,8 @@ add_filter( 'attachment_fields_to_save', 'navis_save_media_credit', 10, 2 );
 function navis_add_caption_shortcode( $html, $id, $caption, $title, $align, $url, $size, $alt = '' ) {
     $creditor = navis_get_media_credit( $id );
 
-    //if ( empty( $caption ) && empty( $creditor->toString() ) )
-    if ( empty( $caption ) && !$creditor->toString()) {
+    //if ( empty( $caption ) && empty( $creditor->to_string() ) )
+    if ( empty( $caption ) && !$creditor->to_string()) {
         return $html;
     };
 
@@ -113,7 +124,7 @@ function navis_add_caption_shortcode( $html, $id, $caption, $title, $align, $url
 
     $shcode = '[caption id="' . $id . '" align="align' . $align . 
         '" width="' . $width . '" caption="' . addslashes( $caption ) .
-        '" credit="' . addslashes( $creditor->toString() ) . '"]' .  $html . '[/caption]';
+        '" credit="' . addslashes( $creditor->to_string() ) . '"]' .  $html . '[/caption]';
     return $shcode;
 }
 function navis_remove_caption_handler() {
