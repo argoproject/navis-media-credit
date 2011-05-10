@@ -24,8 +24,10 @@ class Navis_Media_Credit {
         if ( $this->credit && $this->org ) {
             return sprintf( "%s / %s", esc_attr( $this->credit ), 
                             esc_attr( $this->org ) );
-        } else {
-            return esc_attr( $this->credit ) || esc_attr( $this->org );
+        } elseif ( $this->credit ) { // try returning just a name first
+            return esc_attr( $this->credit );
+        } else { // we don't have a name, so this should return an org or nothing
+            return esc_attr( $this->org );
         }
     }
 
