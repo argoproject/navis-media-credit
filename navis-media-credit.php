@@ -34,6 +34,10 @@ class Navis_Media_Credit {
         if ( ! is_admin() )
             return;
 
+        add_action(
+            'admin_init',
+            array( &$this, 'admin_init' )
+        );
 
         add_filter( 
             'attachment_fields_to_save', 
@@ -43,8 +47,6 @@ class Navis_Media_Credit {
             'attachment_fields_to_edit', 
             array( &$this, 'add_media_credit' ), 10, 2 
         );
-
-        remove_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 );
 
         add_filter( 
             'image_send_to_editor', 
@@ -60,12 +62,16 @@ class Navis_Media_Credit {
             'admin_footer-post.php',
             array( &$this, 'monkeypatch_wpeditimage' ), 1000 
         );
+
         add_action( 
             'admin_footer-post-new.php',
             array( &$this, 'monkeypatch_wpeditimage' ), 1000 
         );
     }
 
+    function admin_init() {
+        remove_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 );
+    }
 
     function get_media_credit_for_attachment( $text = '', $id ) {
         $creditor = navis_get_media_credit( $id );
@@ -124,7 +130,6 @@ class Navis_Media_Credit {
      * with one that supports a credit field.
      */
     function add_caption_shortcode( $html, $id, $caption, $title, $align, $url, $size, $alt = '' ) {
-        remove_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 ); // XXX: shouldn't need to do this here.
         $creditor = navis_get_media_credit( $id );
 
         if ( empty( $caption ) && !$creditor->to_string()) {
