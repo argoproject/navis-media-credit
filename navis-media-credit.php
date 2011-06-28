@@ -54,18 +54,8 @@ class Navis_Media_Credit {
         );
 
         add_filter(
-            'tiny_mce_before_init',
-            array( &$this, 'init_monkeypatching' )
-        );
-
-        add_action( 
-            'admin_footer-post.php',
-            array( &$this, 'monkeypatch_wpeditimage' ), 1000 
-        );
-
-        add_action( 
-            'admin_footer-post-new.php',
-            array( &$this, 'monkeypatch_wpeditimage' ), 1000 
+            'mce_external_plugins',
+            array( &$this, 'plugins_monkeypatching' )
         );
     }
 
@@ -184,19 +174,11 @@ class Navis_Media_Credit {
     }
 
 
-    function init_monkeypatching( $initArray ) {
-        $initArray[ 'setup' ] = 'monkeypatchTinyMCE';
-        return $initArray;
+    function plugins_monkeypatching( $plugins ) {
+        $plugins[ 'argo_wpeditimage' ] = plugins_url( 'js/media_credit_editor_plugin.js', __FILE__ );
+        return $plugins;
     }
 
-
-    /*
-     * functions to override default wpeditimage TinyMCE plugin.
-     */
-    function monkeypatch_wpeditimage() {
-        $srcurl = plugins_url( 'js/media_credit_editor_plugin.js', __FILE__ );
-        printf( '<script type="text/javascript" src="%s"></script>', $srcurl );
-    }
 }
 
 new Navis_Media_Credit;
