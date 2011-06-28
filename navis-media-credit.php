@@ -34,6 +34,7 @@ class Navis_Media_Credit {
         if ( ! is_admin() )
             return;
 
+
         add_filter( 
             'attachment_fields_to_save', 
             array( &$this, 'save_media_credit' ), 10, 2 
@@ -50,11 +51,21 @@ class Navis_Media_Credit {
             array( &$this, 'add_caption_shortcode' ), 19, 8 
         );
 
+        add_filter(
+            'tiny_mce_before_init',
+            array( &$this, 'init_monkeypatching' )
+        );
+
         add_action( 
-            'admin_print_footer_scripts', 
+            'admin_footer-post.php',
+            array( &$this, 'monkeypatch_wpeditimage' ), 1000 
+        );
+        add_action( 
+            'admin_footer-post-new.php',
             array( &$this, 'monkeypatch_wpeditimage' ), 1000 
         );
     }
+
 
     function get_media_credit_for_attachment( $text = '', $id ) {
         $creditor = navis_get_media_credit( $id );
@@ -166,6 +177,13 @@ class Navis_Media_Credit {
 
         return $out;
     }
+
+
+    function init_monkeypatching( $initArray ) {
+        $initArray[ 'setup' ] = 'monkeypatchTinyMCE';
+        return $initArray;
+    }
+
 
     /*
      * functions to override default wpeditimage TinyMCE plugin.

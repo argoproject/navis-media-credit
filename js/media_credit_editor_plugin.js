@@ -3,6 +3,7 @@
  * wpEditImage tinymce plugin, located here:
  */
 
+function monkeypatchTinyMCE() {
 if ( tinymce != undefined && tinymce.plugins != undefined && tinymce.plugins.wpEditImage != undefined ) {
 tinymce.plugins.wpEditImage.prototype._do_shcode = function(co) {
     return co.replace(/\[(?:wp_)?caption([^\]]+)\]([\s\S]+?)\[\/(?:wp_)?caption\][\s\u00a0]*/g, function(a,b,c){
@@ -51,5 +52,6 @@ tinymce.plugins.wpEditImage.prototype._get_shcode = function(co) {
 
             return '[caption id="'+id+'" align="'+cls+'" width="'+w+'" caption="'+cap+'" credit="'+ cred + '"]'+c+'[/caption]';
     });
+}
 }
 }
