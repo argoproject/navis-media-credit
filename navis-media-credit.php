@@ -44,6 +44,7 @@ class Navis_Media_Credit {
         );
 
         remove_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 );
+
         add_filter( 
             'image_send_to_editor', 
             array( &$this, 'add_caption_shortcode' ), 19, 8 
@@ -112,6 +113,7 @@ class Navis_Media_Credit {
      * with one that supports a credit field.
      */
     function add_caption_shortcode( $html, $id, $caption, $title, $align, $url, $size, $alt = '' ) {
+        remove_filter( 'image_send_to_editor', 'image_add_caption', 20, 8 ); // XXX: shouldn't need to do this here.
         $creditor = navis_get_media_credit( $id );
 
         if ( empty( $caption ) && !$creditor->to_string()) {
@@ -132,7 +134,6 @@ class Navis_Media_Credit {
         $shcode = '[caption id="' . $id . '" align="align' . $align . 
             '" width="' . $width . '" caption="' . addslashes( $caption ) .
             '" credit="' . addslashes( $creditor->to_string() ) . '"]' .  $html . '[/caption]';
-        error_log( "shortcode is: " . $shcode );
         return $shcode;
     }
 
