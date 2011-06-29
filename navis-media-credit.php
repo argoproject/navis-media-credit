@@ -202,8 +202,10 @@ class Media_Credit {
         if ( $this->credit && $this->org ) {
             return sprintf( "%s / %s", esc_attr( $this->credit ), 
                             esc_attr( $this->org ) );
-        } else {
-            return esc_attr( $this->credit ) || esc_attr( $this->org );
+        } elseif ( $this->credit ) {
+            return esc_attr( $this->credit );
+        } elseif ( $this->org ) {
+            return esc_attr( $this->org );
         }
     }
 
