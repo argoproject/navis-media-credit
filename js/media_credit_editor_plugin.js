@@ -39,7 +39,7 @@
 
             tinymce.plugins.wpEditImage.prototype._get_shcode = function(co) {
                 //return co.replace(/<div class="mceTemp[^"]*">\s*<dl([^>]+)>\s*<dt[^>]+>([\s\S]+?)<\/dt>\s*<dd[^>]+>(.+?)<\/dd>\s*<dd[^>]+>(.+?)<\/dd>\s*<\/dl>\s*<\/div>\s*/gi, function(a,b,c,cap,cred){
-                return co.replace(/<div([^>]+)>\s*(<(?:a|img).*?>)\s*<p class="wp-media-credit">(.*?)<\/p>\s*<p class="wp-caption-text">(.*?)<\/p><\/div>/gi, function(a,b,c,cred,cap) {
+                return co.replace(/(?:\s*<p>\s*(?:.nbsp.)?\s*<\/p>\s*)*<div([^>]+)>\s*(<(?:a|img).*?>)\s*<p class="wp-media-credit">(.*?)<\/p>\s*<p class="wp-caption-text">(.*?)<\/p><\/div>(?:\s*<p>\s*(?:.nbsp.)?\s*<\/p>\s*)*/gi, function(a,b,c,cred,cap) {
                         var id, cls, w;
 
                         id = b.match(/id=['"]([^'"]+)/i);
