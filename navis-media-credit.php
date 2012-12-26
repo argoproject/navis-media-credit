@@ -22,13 +22,13 @@ function navis_get_media_credit( $id ) {
 
 class Navis_Media_Credit {
     function __construct() {
-        add_filter( 'navis_media_credit_for_attachment', 
-            'get_media_credit_for_attachment', 10, 2 
+        add_filter( 'navis_media_credit_for_attachment',
+            'get_media_credit_for_attachment', 10, 2
         );
 
-        add_filter( 
-            'img_caption_shortcode', 
-            array( &$this, 'caption_shortcode' ), 10, 3 
+        add_filter(
+            'img_caption_shortcode',
+            array( &$this, 'caption_shortcode' ), 10, 3
         );
 
         if ( ! is_admin() )
@@ -39,18 +39,18 @@ class Navis_Media_Credit {
             array( &$this, 'admin_init' )
         );
 
-        add_filter( 
-            'attachment_fields_to_save', 
-            array( &$this, 'save_media_credit' ), 10, 2 
+        add_filter(
+            'attachment_fields_to_save',
+            array( &$this, 'save_media_credit' ), 10, 2
         );
-        add_filter( 
-            'attachment_fields_to_edit', 
-            array( &$this, 'add_media_credit' ), 10, 2 
+        add_filter(
+            'attachment_fields_to_edit',
+            array( &$this, 'add_media_credit' ), 10, 2
         );
 
-        add_filter( 
-            'image_send_to_editor', 
-            array( &$this, 'add_caption_shortcode' ), 19, 8 
+        add_filter(
+            'image_send_to_editor',
+            array( &$this, 'add_caption_shortcode' ), 19, 8
         );
 
         add_filter(
@@ -76,13 +76,13 @@ class Navis_Media_Credit {
             'input' => 'text',
             'value' => $creditor->credit,
         );
-        
+
         $fields[ 'navis_media_credit_org' ] = array(
             'label' => 'Organization',
             'input' => 'text',
             'value' => $creditor->org
         );
-        
+
         $can_distribute = $creditor->can_distribute;
         $checked = $can_distribute ? 'checked="checked"' : "";
         $distfield = 'attachments[' . $post->ID . '][navis_media_can_distribute]';
@@ -101,7 +101,7 @@ class Navis_Media_Credit {
         foreach ( $fields as $field ) {
             if ( $_POST['attachments'] ) {
                 $input = $_POST['attachments'][$post['ID']][$field];
-            } 
+            }
             else {
                 // XXX: not sure if this branch is ever followed
                 $input = $_POST[ $field ];
@@ -137,7 +137,7 @@ class Navis_Media_Credit {
         if ( empty($align) )
             $align = 'none';
 
-        $shcode = '[caption id="' . $id . '" align="align' . $align . 
+        $shcode = '[caption id="' . $id . '" align="align' . $align .
             '" width="' . $width . '" caption="' . addslashes( $caption ) .
             '" credit="' . addslashes( $creditor->to_string() ) . '"]' .  $html . '[/caption]';
         return $shcode;
@@ -161,7 +161,7 @@ class Navis_Media_Credit {
         if ( $id ) $id = 'id="' . esc_attr($id) . '" ';
 
         // XXX: maybe remove module and image classes at some point
-        $out = sprintf( '<div %s class="wp-caption module image %s" style="width: %spx;">%s', $id, $align, $width, do_shortcode( $content ) );
+        $out = sprintf( '<div %s class="wp-caption module image %s" style="max-width: %spx;">%s', $id, $align, $width, do_shortcode( $content ) );
         if ( $credit ) {
             $out .= sprintf( '<p class="wp-media-credit">%s</p>', $credit );
         }
@@ -187,20 +187,20 @@ new Navis_Media_Credit;
 class Media_Credit {
     function __construct( $post_id ) {
         $this->post_id = $post_id;
-        $this->credit = get_post_meta( $post_id, 
-            MEDIA_CREDIT_POSTMETA_KEY, true 
+        $this->credit = get_post_meta( $post_id,
+            MEDIA_CREDIT_POSTMETA_KEY, true
         );
-        $this->org = get_post_meta( $post_id, 
-            '_navis_media_credit_org', true 
+        $this->org = get_post_meta( $post_id,
+            '_navis_media_credit_org', true
         );
-        $this->can_distribute = get_post_meta( $post_id, 
-            '_navis_media_can_distribute', true 
+        $this->can_distribute = get_post_meta( $post_id,
+            '_navis_media_can_distribute', true
         );
     }
 
     function to_string() {
         if ( $this->credit && $this->org ) {
-            return sprintf( "%s / %s", esc_attr( $this->credit ), 
+            return sprintf( "%s / %s", esc_attr( $this->credit ),
                             esc_attr( $this->org ) );
         } elseif ( $this->credit ) {
             return esc_attr( $this->credit );
